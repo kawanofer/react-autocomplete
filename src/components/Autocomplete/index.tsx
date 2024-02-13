@@ -52,7 +52,7 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
 
   const renderOptions = useMemo(() => {
     return <ul className='autocomplete-options'>
-      {optionsData?.map((item) => {
+      {optionsData?.length > 0 ? optionsData?.map((item) => {
         const startIndex = item.name.toLowerCase().indexOf(inputValue.toLowerCase())
         const endIndex = startIndex + inputValue.length
 
@@ -69,7 +69,8 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
             )}
           </li>
         )
-      })}
+      }) :
+        <li>No data found</li>}
     </ul>
   }, [optionsData, inputValue])
 
