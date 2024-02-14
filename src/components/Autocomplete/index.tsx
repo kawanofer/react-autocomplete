@@ -17,6 +17,7 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
   const [inputValue, setInputValue] = useState<string>('')
   const [filteredOptions, setFilteredOptions] = useState<OptionsProps[]>([])
   const [showOptions, setShowOptions] = useState<boolean>(false)
+  const [activeOptionIndex, setActiveOptionIndex] = useState<number>(0)
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const typedValue = e.target.value
@@ -24,16 +25,11 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
     setInputValue(typedValue)
     setFilteredOptions(filteredOptions)
     setShowOptions(true)
+    setActiveOptionIndex(-1)
   }
 
   const onMouseDown = () => {
     setShowOptions(true)
-  }
-
-  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.keyCode === 27) {
-      setShowOptions(false)
-    }
   }
 
   const onClick = (e: React.MouseEvent<HTMLLIElement>) => {
@@ -52,12 +48,17 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
 
   const renderOptions = useMemo(() => {
     return <ul className='autocomplete-options'>
-      {optionsData?.length > 0 ? optionsData?.map((item) => {
+      {optionsData?.length > 0 ? optionsData?.map((item, index) => {
         const startIndex = item.name.toLowerCase().indexOf(inputValue.toLowerCase())
         const endIndex = startIndex + inputValue.length
 
         return (
-          <li key={item.name} onClick={onClick} value={item.name}>
+          <li
+            key={item.name}
+            onClick={onClick}
+            value={item.name}
+            className={index === activeOptionIndex ? 'active' : ''}
+          >
             {startIndex > -1 ? (
               <>
                 {item.name.substring(0, startIndex)}
@@ -70,9 +71,36 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
           </li>
         )
       }) :
-        <li>No data found</li>}
+        <li>No data found</li>
+      }
     </ul>
-  }, [optionsData, inputValue])
+  }, [optionsData, inputValue, activeOptionIndex])
+
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault()
+        setActiveOptionIndex(prevIndex => (prevIndex - 1 + optionsData.length) % optionsData.length)
+        break
+      case 'ArrowDown':
+        e.preventDefault()
+        setActiveOptionIndex(prevIndex => (prevIndex + 1) % optionsData.length)
+        break
+      case 'Enter':
+        if (activeOptionIndex !== -1) {
+          e.preventDefault()
+          onSelect(optionsData[activeOptionIndex].name)
+          setShowOptions(false)
+          setInputValue(optionsData[activeOptionIndex].name)
+        }
+        break
+      case 'Escape':
+        setShowOptions(false)
+        break
+      default:
+        break
+    }
+  }
 
   return (
     <div className='autocomplete-container'>
