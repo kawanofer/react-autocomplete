@@ -1,4 +1,4 @@
-import React, { useMemo, useState, ChangeEvent, KeyboardEvent } from 'react'
+import React, { useMemo, useRef, useEffect, useState, ChangeEvent, KeyboardEvent } from 'react'
 
 import './styles.css'
 
@@ -18,6 +18,20 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
   const [filteredOptions, setFilteredOptions] = useState<OptionsProps[]>([])
   const [showOptions, setShowOptions] = useState<boolean>(false)
   const [activeOptionIndex, setActiveOptionIndex] = useState<number>(0)
+
+  const autocompleteRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target as Node)) {
+        setShowOptions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const typedValue = e.target.value
@@ -105,7 +119,7 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
   }
 
   return (
-    <div className='autocomplete-container'>
+    <div ref={autocompleteRef} className='autocomplete-container'>
       <input
         className='autocomplete-input'
         disabled={isLoading}
