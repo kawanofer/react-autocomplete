@@ -8,7 +8,7 @@ interface OptionsProps {
 }
 
 type AutocompleteProps = {
-  options: OptionsProps[];
+  options: OptionsProps[] | null | undefined;
   isLoading: boolean;
   onSelect: (value: string) => void
 }
@@ -21,7 +21,7 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const typedValue = e.target.value
-    const filteredOptions = options.filter(item => item?.name.toLowerCase().indexOf(typedValue.toLowerCase()) > -1)
+    const filteredOptions = options?.filter(item => item?.name.toLowerCase().indexOf(typedValue.toLowerCase()) > -1) || []
     setInputValue(typedValue)
     setFilteredOptions(filteredOptions)
     setShowOptions(true)
@@ -48,16 +48,16 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
 
   const renderOptions = useMemo(() => {
     return <ul className='autocomplete-options'>
-      {optionsData?.length > 0 ? optionsData?.map((item, index) => {
+      {optionsData && optionsData?.length > 0 ? optionsData?.map((item, index) => {
         const startIndex = item.name.toLowerCase().indexOf(inputValue.toLowerCase())
         const endIndex = startIndex + inputValue.length
 
         return (
           <li
+            className={index === activeOptionIndex ? 'active' : ''}
             key={item.name}
             onClick={onClick}
             value={item.name}
-            className={index === activeOptionIndex ? 'active' : ''}
           >
             {startIndex > -1 ? (
               <>
@@ -71,7 +71,7 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
           </li>
         )
       }) :
-        <li>No data found</li>
+        <li>No results found</li>
       }
     </ul>
   }, [optionsData, inputValue, activeOptionIndex])
@@ -80,18 +80,20 @@ const Autocomplete = ({ options, isLoading, onSelect }: AutocompleteProps) => {
     switch (e.key) {
       case 'ArrowUp':
         e.preventDefault()
-        setActiveOptionIndex(prevIndex => (prevIndex - 1 + optionsData.length) % optionsData.length)
+        setActiveOptionIndex(prevIndex => (prevIndex - 1 + (optionsData?.length ?? 1)) % (optionsData?.length ?? 1))
         break
       case 'ArrowDown':
         e.preventDefault()
-        setActiveOptionIndex(prevIndex => (prevIndex + 1) % optionsData.length)
+        setActiveOptionIndex(prevIndex => (prevIndex + 1) % (optionsData?.length ?? 1))
         break
       case 'Enter':
         if (activeOptionIndex !== -1) {
           e.preventDefault()
-          onSelect(optionsData[activeOptionIndex].name)
+          if (optionsData?.length) {
+            onSelect(optionsData[activeOptionIndex].name)
+            setInputValue(optionsData[activeOptionIndex].name)
+          }
           setShowOptions(false)
-          setInputValue(optionsData[activeOptionIndex].name)
         }
         break
       case 'Escape':
